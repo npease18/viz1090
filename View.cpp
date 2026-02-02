@@ -339,6 +339,27 @@ void View::drawStatus() {
     int left = PAD; 
     int top = screen_height - messageFontHeight - PAD;
 
+    // Connection indicator - blinks to show active datastream
+    if(appData->connected) {
+        // Blink every 1 second using current time
+        auto currentTime = std::chrono::high_resolution_clock::now();
+        auto timeMs = std::chrono::duration_cast<std::chrono::milliseconds>(currentTime.time_since_epoch()).count();
+        bool blink = (timeMs / 1000) % 2 == 0;
+        SDL_Color indicatorColor = blink ? style.buttonColor : style.grey_dark;
+        
+        // Draw a small filled circle as connection indicator
+        filledCircleRGBA(renderer, left + 8, top + messageFontHeight/2, 4, 
+                        indicatorColor.r, indicatorColor.g, indicatorColor.b, 255);
+        
+        // Move the left position for other status boxes
+        left += 20;
+    } else {
+        // Show red indicator when not connected
+        filledCircleRGBA(renderer, left + 8, top + messageFontHeight/2, 4, 
+                        style.red.r, style.red.g, style.red.b, 255);
+        left += 20;
+    }
+
     if(fps) {
         char fps[60] = " ";
         snprintf(fps,40,"%.1f", 1000.0 / lastFrameTime);

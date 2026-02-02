@@ -1007,9 +1007,30 @@ void View::drawPlanes() {
             }
 
             int x, y;
+            float displayLat = p->lat;
+            float displayLon = p->lon;
+            
+            // Estimate aircraft position if location data is older than 5 seconds
+            float locationAge = elapsed(p->msSeenLatLon);
+            if(locationAge > 5000 && p->speed > 0 && p->track >= 0) {
+                // Calculate estimated position based on speed and track
+                float timeElapsed = locationAge / 1000.0f; // Convert to seconds
+                float distanceNM = (p->speed * timeElapsed) / 3600.0f; // Speed in knots, distance in nautical miles
+                float trackRadians = p->track * M_PI / 180.0f; // Convert degrees to radians
+                
+                // Convert nautical miles to degrees (approximately)
+                float distanceDegrees = distanceNM / 60.0f; // 1 degree ≈ 60 nautical miles
+                
+                // Calculate new position
+                float deltaLat = distanceDegrees * cos(trackRadians);
+                float deltaLon = distanceDegrees * sin(trackRadians) / cos(displayLat * M_PI / 180.0f);
+                
+                displayLat = p->lat + deltaLat;
+                displayLon = p->lon + deltaLon;
+            }
 
 	    float dx, dy;
-            pxFromLonLat(&dx, &dy, p->lon, p->lat);
+            pxFromLonLat(&dx, &dy, displayLon, displayLat);
             screenCoords(&x, &y, dx, dy);
 
             float age_ms = elapsed(p->created);

@@ -598,7 +598,7 @@ void View::drawLines(int left, int top, int right, int bottom, int bailTime) {
 
     drawLinesRecursive(&(map.airport_root), screen_lat_min, screen_lat_max, screen_lon_min, screen_lon_max, style.airportColor);
 
-    drawTrails(left, top, right, bottom);
+    // drawTrails(left, top, right, bottom); // Removed aircraft breadcrumbs/trails
 }
 
 void View::drawLinesRecursive(QuadTree *tree, float screen_lat_min, float screen_lat_max, float screen_lon_min, float screen_lon_max, SDL_Color color) {

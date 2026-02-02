@@ -78,7 +78,7 @@ typedef struct Style {
 	    planeGoneColor = grey;
 	    trailColor = {0,255,174};
 
-	    geoColor = purple_dark;
+	    geoColor = green;
 	    airportColor = purple;
 
 	    labelColor = white;

@@ -916,25 +916,26 @@ void View::drawPlanes() {
                 }
                 // circleRGBA(renderer, x, y, 500 - age_ms, 255,255, 255, (uint8_t)(255.0 * age_ms / 500.0));   
             } else if(1000 * DISPLAY_ACTIVE - elapsed(p->msSeen) > 500) {
+                // Calculate screen position for this aircraft
+                int usex = x;   
+                int usey = y;
+                float useHeading = static_cast<float>(p->track);
+
+                p->x = usex;
+                p->y = usey;
+
+                planeColor = lerpColor(style.planeColor, style.planeGoneColor, elapsed_s(p->msSeen) / DISPLAY_ACTIVE);
+
+                if(elapsed_s(p->msSeen) > DISPLAY_ACTIVE / 2) {
+                    arcRGBA(renderer, x, y, 8, 0, 360 * 2.0 * (elapsed_s(p->msSeen) / DISPLAY_ACTIVE - 0.5), planeColor.r, planeColor.g, planeColor.b, 255);
+                }
+                
+                if(p == selectedAircraft) {
+                    planeColor = style.selectedColor;
+                }
+
+                // Draw plane icon if valid heading data exists
                 if(MODES_ACFLAGS_HEADING_VALID) {
-                    int usex = x;   
-                    int usey = y;
-                    float useHeading = static_cast<float>(p->track);
-
-                    p->x = usex;
-                    p->y = usey;
-
-                    planeColor = lerpColor(style.planeColor, style.planeGoneColor, elapsed_s(p->msSeen) / DISPLAY_ACTIVE);
-
-		    if(elapsed_s(p->msSeen) > DISPLAY_ACTIVE / 2) {
-		    	arcRGBA(renderer, x, y, 8, 0, 360 * 2.0 * (elapsed_s(p->msSeen) / DISPLAY_ACTIVE - 0.5), planeColor.r, planeColor.g, planeColor.b, 255);
-		    }
-                    
-                    if(p == selectedAircraft) {
-                        planeColor = style.selectedColor;
-                    }
-
-
                     if(outOfBounds(x,y)) {
                         drawPlaneOffMap(x, y, &(p->x), &(p->y), planeColor);
                     } else {
@@ -949,8 +950,11 @@ void View::drawPlanes() {
 
                         drawPlaneIcon(usex, usey, useHeading, planeColor);
                     }
+                }
 
-                    drawPlaneText(p);            
+                // Always draw text label for active aircraft that are in bounds
+                if(!outOfBounds(x,y)) {
+                    drawPlaneText(p);
                 }
             } else {
                 circleRGBA(renderer, x, y, 8 * (1000 * DISPLAY_ACTIVE - elapsed(p->msSeen)) / 500, style.planeGoneColor.r, style.planeGoneColor.g, style.planeGoneColor.b, 255);

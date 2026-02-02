@@ -459,12 +459,12 @@ void View::drawPlaneOffMap(int x, int y, int *returnx, int *returny, SDL_Color p
 
 void View::drawPlaneIcon(int x, int y, float heading, SDL_Color planeColor)
 {
-    float body = 8.0 * screen_uiscale;
-    float wing = 6.0 * screen_uiscale;
+    float body = 12.0 * screen_uiscale;
+    float wing = 9.0 * screen_uiscale;
     float wingThick = 0.5;
-    float tail = 3.0 * screen_uiscale;
+    float tail = 4.5 * screen_uiscale;
     float tailThick = 0.35;
-    float bodyWidth = screen_uiscale;
+    float bodyWidth = 1.5 * screen_uiscale;
 
     float vec[3];
     vec[0] = sin(heading * M_PI / 180);

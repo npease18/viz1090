@@ -918,9 +918,6 @@ void View::drawPlanes() {
                         drawPlaneOffMap(x, y, &(p->x), &(p->y), planeColor);
                     } else {
                         if(elapsed(p->msSeenLatLon) < 500) {
-                            //highFramerate = true;
-                            circleRGBA(renderer, p->x, p->y, elapsed(p->msSeenLatLon) * screen_width / (8192), 127,127, 127, 255 - (uint8_t)(255.0 * elapsed(p->msSeenLatLon) / 500.0));   
-                        
                             pxFromLonLat(&dx, &dy, p->getLastLon(), p->getLastLat());
                             screenCoords(&x, &y, dx, dy);
 

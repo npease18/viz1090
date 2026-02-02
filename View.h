@@ -109,6 +109,7 @@ class View {
 		void drawGeography();
 		void drawSignalMarks(Aircraft *p, int x, int y);
 		void drawPlaneText(Aircraft *p);
+		void drawAircraftList();
 		void resolveLabelConflicts();
 		void drawPlanes();
 		void animateCenterAbsolute(float x, float y);
@@ -178,6 +179,11 @@ class View {
 
 		TTF_Font		*messageFont;	
 		TTF_Font		*labelFont;		
+
+		// Zoom-based fonts for place names
+		TTF_Font		*placeNameFontSmall;
+		TTF_Font		*placeNameFontMedium;
+		TTF_Font		*placeNameFontLarge;
 
 		int mapFontWidth;
 		int mapFontHeight;

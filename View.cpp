@@ -38,6 +38,7 @@
 
 #include <iostream>
 #include <thread>
+#include <cstdio>
 
 using fmilliseconds = std::chrono::duration<float, std::milli>;
 using fseconds = std::chrono::duration<float>;
@@ -320,6 +321,16 @@ void View::drawStatusBox(int *left, int *top, std::string label, std::string mes
     currentLabel.draw(renderer);
 
     *left = *left + labelWidth + messageWidth + PAD;
+}
+
+SDL_Rect View::drawString(std::string text, int x, int y, TTF_Font *font, SDL_Color color) {
+    Label currentLabel;
+    currentLabel.setFont(font);
+    currentLabel.setColor(color);
+    currentLabel.setPosition(x, y);
+    currentLabel.setText(text);
+    currentLabel.draw(renderer);
+    return currentLabel.getRect();
 }
 
 void View::drawCenteredStatusBox(std::string label, std::string message, SDL_Color color) {
@@ -738,6 +749,101 @@ void View::drawPlaceNames() {
     }
 }
 
+void View::drawAircraftList() {
+    int listX = screen_width - 250;
+    int listY = 10;
+    int lineHeight = 20 * screen_uiscale;
+    int currentY = listY;
+    int aircraftCount = 0;
+    
+    // Count aircraft first to draw background
+    Aircraft *p = appData->aircraftList.head;
+    while(p && aircraftCount < 20) { // Limit to 20 aircraft
+        // Show all aircraft that have been detected recently, regardless of position data
+        if(elapsed(p->msSeen) < 300000) { // 5 minutes
+            aircraftCount++;
+        }
+        p = p->next;
+    }
+    
+    if(aircraftCount == 0) return;
+    
+    // Draw background
+    int bgWidth = 240;
+    int bgHeight = (aircraftCount + 1) * lineHeight + 10;
+    SDL_Rect bgRect = {listX - 10, listY - 5, bgWidth, bgHeight};
+    SDL_SetRenderDrawColor(renderer, style.labelBackground.r, style.labelBackground.g, style.labelBackground.b, 200);
+    SDL_RenderFillRect(renderer, &bgRect);
+    SDL_SetRenderDrawColor(renderer, style.buttonOutline.r, style.buttonOutline.g, style.buttonOutline.b, 255);
+    SDL_RenderDrawRect(renderer, &bgRect);
+    
+    // Draw header
+    drawString("AIRCRAFT", listX, currentY, listFont, style.labelColor);
+    drawString("ALT", listX + 120, currentY, listFont, style.labelColor);
+    currentY += lineHeight;
+    
+    // Draw aircraft entries
+    p = appData->aircraftList.head;
+    int index = 0;
+    while(p && index < 20) {
+        // Show all aircraft that have been detected recently
+        if(elapsed(p->msSeen) < 300000) { // 5 minutes
+            std::string callsignText = "";
+            std::string altitudeText = "";
+            
+            // Get callsign or hex
+            if(strlen(p->flight) > 0) {
+                callsignText = std::string(p->flight);
+            } else {
+                char hexStr[10];
+                sprintf(hexStr, "%06X", p->addr);
+                callsignText = std::string(hexStr);
+            }
+            
+            // Check if aircraft is currently displayed on map
+            bool isDisplayed = (p->lon && p->lat && (1000 * DISPLAY_ACTIVE - elapsed(p->msSeen) > 500));
+            
+            // Get altitude
+            if(p->altitude > 0) {
+                char altStr[10];
+                sprintf(altStr, "%dft", p->altitude);
+                altitudeText = std::string(altStr);
+            } else {
+                altitudeText = "---";
+            }
+            
+            // Add status indicator if not displayed
+            if(!isDisplayed) {
+                if(!p->lon || !p->lat) {
+                    callsignText += " (no pos)";
+                } else {
+                    callsignText += " (old)";
+                }
+            }
+            
+            // Highlight selected aircraft
+            SDL_Color textColor = style.labelColor;
+            if(!isDisplayed) {
+                textColor = style.grey; // Dim text for non-displayed aircraft
+            }
+            if(p == selectedAircraft) {
+                textColor = style.white;  // Use white text for better contrast
+                SDL_Rect highlight = {listX - 5, currentY - 2, bgWidth - 10, lineHeight};
+                SDL_SetRenderDrawColor(renderer, style.selectedColor.r, style.selectedColor.g, style.selectedColor.b, 50);
+                SDL_RenderFillRect(renderer, &highlight);
+            }
+            
+            // Draw columns with proper alignment
+            drawString(callsignText, listX, currentY, listFont, textColor);
+            drawString(altitudeText, listX + 120, currentY, listFont, textColor);
+            
+            currentY += lineHeight;
+            index++;
+        }
+        p = p->next;
+    }
+}
+
 void View::drawGeography() {
 
     if((mapRedraw && !mapMoved) || (mapAnimating && elapsed(lastRedraw) > 8 * FRAMETIME) ||  elapsed(lastRedraw) > 2000 || (map.loaded < 100 && elapsed(lastRedraw) > 250)) {
@@ -1121,27 +1227,61 @@ void View::drawClick() {
 
 void View::registerClick(int tapcount, int x, int y) {
     if(tapcount == 1) {
-        Aircraft *p = appData->aircraftList.head;
-        Aircraft *selection = NULL;
-
-        while(p) {
-            if(x && y) {
-                if((p->x - x) * (p->x - x) + (p->y - y) * (p->y - y) < 900) {
-                    if(selection) {
-                        if((p->x - x) * (p->x - x) + (p->y - y) * (p->y - y) < 
-                            (selection->x - x) * (selection->x - x) + (selection->y - y) * (selection->y - y)) {
-                            selection = p;
+        // Check if click is in aircraft list area (top right)
+        int listX = screen_width - 250;
+        int listY = 10;
+        int lineHeight = 20 * screen_uiscale;
+        
+        if(x >= listX - 10 && x <= screen_width - 10 && y >= listY) {
+            // Click is in aircraft list area
+            int clickedLine = (y - (listY + lineHeight)) / lineHeight; // Skip header
+            
+            if(clickedLine >= 0) {
+                Aircraft *p = appData->aircraftList.head;
+                int index = 0;
+                
+                while(p && index <= clickedLine) {
+                    if(p->lon && p->lat && (1000 * DISPLAY_ACTIVE - elapsed(p->msSeen) > 500)) {
+                        if(index == clickedLine) {
+                            selectedAircraft = p;
+                            // Animate to center on selected aircraft
+                            if(p->lon && p->lat) {
+                                mapTargetLon = p->lon;
+                                mapTargetLat = p->lat;
+                                mapTargetMaxDist = 0.25 * maxDist;
+                                mapMoved = 1;
+                            }
+                            break;
                         }
-                    } else {
-                        selection = p;
-                    }    
+                        index++;
+                    }
+                    p = p->next;
                 }
             }
+        } else {
+            // Original click handling for aircraft on map
+            Aircraft *p = appData->aircraftList.head;
+            Aircraft *selection = NULL;
 
-            p = p->next;
+            while(p) {
+                if(x && y) {
+                    if((p->x - x) * (p->x - x) + (p->y - y) * (p->y - y) < 900) {
+                        if(selection) {
+                            if((p->x - x) * (p->x - x) + (p->y - y) * (p->y - y) < 
+                                (selection->x - x) * (selection->x - x) + (selection->y - y) * (selection->y - y)) {
+                                selection = p;
+                            }
+                        } else {
+                            selection = p;
+                        }    
+                    }
+                }
+
+                p = p->next;
+            }
+
+            selectedAircraft = selection;
         }
-
-        selectedAircraft = selection;
     } else if(tapcount == 2) {
         mapTargetMaxDist = 0.25 * maxDist;
         animateCenterAbsolute(x, y);
@@ -1202,6 +1342,7 @@ void View::draw() {
         drawPlanes();  
     }
 
+    drawAircraftList();
     drawStatus();
     //drawMouse();
     drawClick();

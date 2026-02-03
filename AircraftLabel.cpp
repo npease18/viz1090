@@ -48,31 +48,50 @@ SDL_Rect AircraftLabel::getFullRect(int labelLevel) {
 
 void AircraftLabel::update() {
     char flight[17] = "";
-    snprintf(flight,17," %s", p->flight);
+    
+    // Always show some identifier
+    if(strlen(p->flight) > 0) {
+        snprintf(flight, 17, " %s", p->flight);
+    } else {
+        // Show hex address if no callsign
+        snprintf(flight, 17, " %06X", p->addr);
+    }
 
-
-	std::string flightString = flight;
-	flightString.erase(std::remove_if(flightString.begin(), flightString.end(), isspace), flightString.end());
-
+    std::string flightString = flight;
+    flightString.erase(std::remove_if(flightString.begin(), flightString.end(), isspace), flightString.end());
+    
+    // Ensure we always have some text
+    if(flightString.empty()) {
+        char hexStr[10];
+        snprintf(hexStr, 10, "%06X", p->addr);
+        flightString = std::string(hexStr);
+    }
+    
     flightLabel.setText(flightString);
 
-	char alt[10] = "";
-    if (metric) {
-        snprintf(alt,10," %dm", static_cast<int>(p->altitude / 3.2828)); 
+    char alt[15] = "";
+    if(p->altitude > 0) {
+        if (metric) {
+            snprintf(alt, 15, " %dm", static_cast<int>(p->altitude / 3.2828)); 
+        } else {
+            snprintf(alt, 15, " %d'", p->altitude); 
+        }
     } else {
-        snprintf(alt,10," %d'", p->altitude); 
+        snprintf(alt, 15, " ---");
     }
-
     altitudeLabel.setText(alt);
 
-    char speed[10] = "";
-    if (metric) {
-        snprintf(speed,10," %dkm/h", static_cast<int>(p->speed * 1.852));
+    char speed[15] = "";
+    if(p->speed > 0) {
+        if (metric) {
+            snprintf(speed, 15, " %dkm/h", static_cast<int>(p->speed * 1.852));
+        } else {
+            snprintf(speed, 15, " %dkts", p->speed);
+        }
     } else {
-        snprintf(speed,10," %dmph", p->speed);
+        snprintf(speed, 15, " ---");
     }
-
-	speedLabel.setText(speed);
+    speedLabel.setText(speed);
 }
 
 void AircraftLabel::clearAcceleration() {

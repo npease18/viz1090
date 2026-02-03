@@ -1001,9 +1001,11 @@ void View::drawPlanes() {
         if (p->lon && p->lat) {
 
             // if lon lat argments were not provided, start by snapping to the first plane we see
+            bool isFirstAircraft = false;
             if(centerLon == 0 && centerLat == 0) {
                 mapTargetLon = p->lon;
                 mapTargetLat = p->lat;
+                isFirstAircraft = true;
             }
 
             int x, y;
@@ -1032,6 +1034,22 @@ void View::drawPlanes() {
 	    float dx, dy;
             pxFromLonLat(&dx, &dy, displayLon, displayLat);
             screenCoords(&x, &y, dx, dy);
+            
+            // Always set aircraft screen position for labels
+            p->x = x;
+            p->y = y;
+            
+            // For the first aircraft, ensure it's visible by centering immediately if needed
+            if(isFirstAircraft) {
+                centerLon = mapTargetLon;
+                centerLat = mapTargetLat;
+                // Recalculate position after centering
+                pxFromLonLat(&dx, &dy, displayLon, displayLat);
+                screenCoords(&x, &y, dx, dy);
+                p->x = x;
+                p->y = y;
+                drawPlaneText(p);
+            }
 
             float age_ms = elapsed(p->created);
             if(age_ms < 500) {
@@ -1041,7 +1059,12 @@ void View::drawPlanes() {
                 for(float theta = 0; theta < 2*M_PI; theta += M_PI / 4) {
                     pixelRGBA(renderer, x + radius * cos(theta), y + radius * sin(theta), style.planeColor.r, style.planeColor.g, style.planeColor.b, 255 * ratio);
                 }
-                // circleRGBA(renderer, x, y, 500 - age_ms, 255,255, 255, (uint8_t)(255.0 * age_ms / 500.0));   
+                // circleRGBA(renderer, x, y, 500 - age_ms, 255,255, 255, (uint8_t)(255.0 * age_ms / 500.0));
+                
+                // Draw label for new aircraft too
+                if(!outOfBounds(x,y)) {
+                    drawPlaneText(p);
+                }
             } else if(1000 * DISPLAY_ACTIVE - elapsed(p->msSeen) > 500) {
                 // Calculate screen position for this aircraft
                 int usex = x;   
@@ -1077,9 +1100,17 @@ void View::drawPlanes() {
 
                         drawPlaneIcon(usex, usey, useHeading, planeColor);
                     }
+                } else {
+                    // No heading data - just show a simple indicator if on screen
+                    if(!outOfBounds(x,y)) {
+                        filledCircleRGBA(renderer, x, y, 4, planeColor.r, planeColor.g, planeColor.b, 255);
+                    }
                 }
 
                 // Always draw text label for active aircraft that are in bounds
+                // Update aircraft position for labels (important for panning)
+                p->x = x;
+                p->y = y;
                 if(!outOfBounds(x,y)) {
                     drawPlaneText(p);
                 }
@@ -1164,7 +1195,7 @@ void View::moveCenterRelative(float dx, float dy) {
 void View::zoomMapToTarget() {
     if(mapTargetMaxDist) {
         if(fabs(mapTargetMaxDist - maxDist) > 0.0001) {
-            maxDist += 0.1 * (mapTargetMaxDist - maxDist);
+            maxDist += 0.25 * (mapTargetMaxDist - maxDist);
             mapAnimating = 1;
             mapMoved = 1;
             highFramerate = true;
@@ -1177,8 +1208,8 @@ void View::zoomMapToTarget() {
 void View::moveMapToTarget() {
     if(mapTargetLon && mapTargetLat) {
         if(fabs(mapTargetLon - centerLon) > 0.0001 || fabs(mapTargetLat - centerLat) > 0.0001) {
-            centerLon += 0.1 * (mapTargetLon- centerLon);
-            centerLat += 0.1 * (mapTargetLat - centerLat);
+            centerLon += 0.25 * (mapTargetLon- centerLon);
+            centerLat += 0.25 * (mapTargetLat - centerLat);
 
             mapAnimating = 1;
             mapMoved = 1;    

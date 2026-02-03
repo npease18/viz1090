@@ -79,7 +79,7 @@ class AircraftLabel {
 		float icon_dist = 15.0f;
 		float boundary_force = 0.01f;
 		float damping_force = 0.65f;
-		float velocity_limit = 1.0f;
+		float velocity_limit = 5.0f;
 		float edge_margin = 15.0f;
 		float drag_force = 0.00f;
 

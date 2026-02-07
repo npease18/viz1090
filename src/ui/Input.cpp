@@ -209,6 +209,10 @@ Input::getInput() {
         if (view->getMapView().maxDist < 0.001f) {
           view->getMapView().maxDist = 0.001f;
         }
+        // Prevent zooming out beyond the entire world (half Earth's circumference)
+        if (view->getMapView().maxDist > 20000.0f) {
+          view->getMapView().maxDist = 20000.0f;
+        }
 
         view->getMapView().mapTargetMaxDist = 0;
         view->getMapView().setMoved();
@@ -216,6 +220,10 @@ Input::getInput() {
 
       case SDL_MULTIGESTURE:
         view->getMapView().maxDist /= 1.0 + 4.0 * event.mgesture.dDist;
+        // Prevent zooming out beyond the entire world (half Earth's circumference)
+        if (view->getMapView().maxDist > 20000.0f) {
+          view->getMapView().maxDist = 20000.0f;
+        }
         view->getMapView().mapTargetMaxDist = 0;
         view->getMapView().setMoved();
 

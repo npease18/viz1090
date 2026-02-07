@@ -256,6 +256,11 @@ View::frameAllAircraft() {
     newMaxDist = 5.0f;
   }
 
+  // Ensure we don't zoom out beyond world view
+  if (newMaxDist > 20000.0f) {
+    newMaxDist = 20000.0f;
+  }
+
   // Clear any selected aircraft so view doesn't track it
   selectedAircraft = nullptr;
 

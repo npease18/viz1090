@@ -107,6 +107,11 @@ void MapView::zoomMapToTarget() {
   if (mapTargetMaxDist) {
     if (std::fabs(mapTargetMaxDist - maxDist) > 0.0001f) {
       maxDist += 0.1f * (mapTargetMaxDist - maxDist);
+      // Ensure we don't exceed world view limits during animation
+      if (maxDist > 20000.0f) {
+        maxDist = 20000.0f;
+        mapTargetMaxDist = 20000.0f;
+      }
       renderState_ = MapRenderState::VIEWPORT_DIRTY;
       highFramerate = true;
     } else {
@@ -182,6 +187,13 @@ void MapView::setTarget(float lon, float lat) {
 }
 
 void MapView::setTargetZoom(float zoom) {
+  // Ensure zoom level stays within world view limits
+  if (zoom < 0.001f) {
+    zoom = 0.001f;
+  }
+  if (zoom > 20000.0f) {
+    zoom = 20000.0f;
+  }
   mapTargetMaxDist = zoom;
 }
 
@@ -215,12 +227,20 @@ void MapView::animateZoomRelative(float factor) {
   if (newMaxDist < 0.001f) {
     newMaxDist = 0.001f;
   }
+  // Prevent zooming out beyond the entire world (half Earth's circumference)
+  if (newMaxDist > 20000.0f) {
+    newMaxDist = 20000.0f;
+  }
 
   // If already animating zoom, multiply the target; otherwise start from current
   if (mapTargetMaxDist != 0.0f) {
     mapTargetMaxDist *= factor;
     if (mapTargetMaxDist < 0.001f) {
       mapTargetMaxDist = 0.001f;
+    }
+    // Prevent zooming out beyond the entire world
+    if (mapTargetMaxDist > 20000.0f) {
+      mapTargetMaxDist = 20000.0f;
     }
   } else {
     mapTargetMaxDist = newMaxDist;

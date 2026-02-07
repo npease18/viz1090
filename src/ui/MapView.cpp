@@ -645,7 +645,7 @@ void MapView::drawScaleBars(const RenderContext& ctx) {
     if (metric) {
       snprintf(scaleLabel, 13, "%d km", static_cast<int>(std::pow(10, scalePower)));
     } else {
-      snprintf(scaleLabel, 13, "%d Mm", static_cast<int>(std::pow(10, scalePower)));
+      snprintf(scaleLabel, 13, "%d nm", static_cast<int>(std::pow(10, scalePower)));
     }
     tick.labelWidth = ctx.mapTextWidth(scaleLabel);
 
@@ -685,7 +685,7 @@ void MapView::drawScaleBars(const RenderContext& ctx) {
     if (metric) {
       snprintf(scaleLabel, 13, "%d km", static_cast<int>(std::pow(10, tick.power)));
     } else {
-      snprintf(scaleLabel, 13, "%d Mm", static_cast<int>(std::pow(10, tick.power)));
+      snprintf(scaleLabel, 13, "%d nm", static_cast<int>(std::pow(10, tick.power)));
     }
 
     Label currentLabel;
@@ -753,8 +753,8 @@ MapView::ScaleBarBounds MapView::calculateScaleBarBounds(const RenderContext& ct
   bounds.rightX = static_cast<int>(baseUnit * (10 + scaleBarDist));
 
   // Add some padding for the label text that appears after the last tick
-  // Label format is "X km" or "X Mm" - estimate width
-  int labelChars = scalePower + 4;  // digits + " km" or " Mm"
+  // Label format is "X km" or "X nm" - estimate width
+  int labelChars = scalePower + 4;  // digits + " km" or " nm"
   bounds.rightX += labelChars * ctx.mapFontWidth();
 
   // Bottom Y is the lowest element - the label at 15 * uiScale plus font height

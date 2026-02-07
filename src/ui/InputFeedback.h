@@ -51,7 +51,7 @@ public:
   /// Register a click event
   void registerClick(int tapcount, int x, int y, AircraftList& aircraftList,
                      Aircraft** selectedAircraft, MapView& mapView,
-                     const AircraftRenderer& aircraftRenderer);
+                     const AircraftRenderer& aircraftRenderer, int screenWidth, int screenHeight);
 
   /// Register mouse movement
   void registerMouseMove(int x, int y);

@@ -284,7 +284,7 @@ View::registerClick(int tapcount, int x, int y) {
     // Lock aircraft list for thread-safe iteration during click detection
     auto lock = appData->lockAircraftList();
     inputFeedback.registerClick(tapcount, x, y, appData->aircraftList, &selectedAircraft, mapView,
-                                aircraftRenderer);
+                                aircraftRenderer, screen_width, screen_height);
   }
   highFramerate = true;
 }

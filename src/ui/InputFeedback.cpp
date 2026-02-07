@@ -179,7 +179,7 @@ void InputFeedback::drawMouse(const RenderContext& ctx) {
 void InputFeedback::registerClick(int tapcount, int x, int y,
                                   AircraftList& aircraftList,
                                   Aircraft** selectedAircraft, MapView& mapView,
-                                  const AircraftRenderer& aircraftRenderer) {
+                                  const AircraftRenderer& aircraftRenderer, int screenWidth, int screenHeight) {
   if (tapcount == 1) {
     Aircraft* selection = nullptr;
     int selDistSq = 0;
@@ -209,7 +209,7 @@ void InputFeedback::registerClick(int tapcount, int x, int y,
   } else if (tapcount == 2) {
     mapView.setTargetZoom(0.25f * mapView.maxDist);
     mapView.animateCenterAbsolute(static_cast<float>(x), static_cast<float>(y),
-                                  800, 600);  // TODO: pass actual screen dimensions
+                                  screenWidth, screenHeight);
   }
 
   clickx = x;

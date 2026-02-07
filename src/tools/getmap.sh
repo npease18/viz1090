@@ -196,7 +196,7 @@ echo ""
 echo "Converting to viz1090 format..."
 
 # Build arguments based on what files exist
-CONVERTER_ARGS="--output-dir ${OUTPUT_DIR}"
+CONVERTER_ARGS="--output-dir ${OUTPUT_DIR} --minpop 10000"
 
 if [[ -f "${MAPDATA_DIR}/ne_10m_land.shp" ]]; then
     CONVERTER_ARGS="${CONVERTER_ARGS} --landfile ${MAPDATA_DIR}/ne_10m_land.shp"

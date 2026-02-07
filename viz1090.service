@@ -1,0 +1,12 @@
+[Unit]
+Description=viz1090
+PartOf=graphical-session.target
+After=graphical-session.target
+
+[Service]
+Type=exec
+WorkingDirectory=/home/npease/software/viz1090-new
+ExecStart=/home/npease/software/viz1090-new/start-viz1090.sh
+
+[Install]
+WantedBy=graphical-session.target

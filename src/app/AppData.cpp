@@ -98,6 +98,9 @@ AppData::update() {
 
   // Update statistics
   updateStatus();
+  
+  // Update battery status
+  mBattery.readStatus();
 }
 
 void

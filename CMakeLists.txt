@@ -62,6 +62,7 @@ set(APP_SOURCES
 set(CORE_SOURCES
   src/core/Aircraft.cpp
   src/core/AircraftList.cpp
+  src/core/Battery.cpp
 )
 
 set(DECODER_SOURCES

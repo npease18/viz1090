@@ -146,6 +146,26 @@ void UIOverlay::draw(const RenderContext& ctx, const AppData& appData, float las
   int left = ctx.padding();
   int top = ctx.screenHeight - ctx.messageFontHeight() - ctx.padding();
 
+  // Draw blinking indicator first (leftmost position)
+  drawBlinkingIndicator(ctx, &left, &top, lastFrameTime);
+
+  // Draw battery status (right after blinking indicator)
+  const auto& batteryStatus = appData.getBatteryStatus();
+  if (batteryStatus.isPresent && batteryStatus.isValid) {
+    char batteryStr[20];
+    snprintf(batteryStr, 20, "%d%%", batteryStatus.percentage);
+    
+    // Choose color: white (like other status elements) normally, amber when charging
+    SDL_Color batteryColor;
+    if (batteryStatus.isCharging) {
+      batteryColor = ctx.style->orange;  // Amber when charging
+    } else {
+      batteryColor = ctx.style->buttonColor;  // White like other status elements
+    }
+    
+    drawStatusBox(ctx, &left, &top, "bat", batteryStr, batteryColor);
+  }
+
   if (showFps) {
     char fps[60] = " ";
     snprintf(fps, 40, "%5.1f", 1000.0f / lastFrameTime);
@@ -242,9 +262,17 @@ UIOverlay::StatusBarBounds UIOverlay::calculateStatusBarBounds(const RenderConte
     }
   };
 
+
+
   // Simulate fps box if shown: "fps" + "XXX.X" (5 chars typical)
   if (showFps) {
     simulateStatusBox("fps", 5);
+  }
+
+  // Simulate battery status if present: "bat" + "XXX%" (up to 4 chars)
+  const auto& batteryStatus = appData.getBatteryStatus();
+  if (batteryStatus.isPresent && batteryStatus.isValid) {
+    simulateStatusBox("bat", 4);  // Account for worst case "100%"
   }
 
   if (!appData.connected()) {
@@ -292,6 +320,32 @@ UIOverlay::StatusBarBounds UIOverlay::calculateStatusBarBounds(const RenderConte
   }
 
   return bounds;
+}
+
+void UIOverlay::drawBlinkingIndicator(const RenderContext& ctx, int* left, int* top, float deltaTime) const {
+  // Update blink timer (accumulate time)
+  blinkTimer_ += deltaTime;
+  
+  // Toggle blink state every 500ms (0.5 seconds)
+  if (blinkTimer_ >= 500.0f) {
+    blinkState_ = !blinkState_;
+    blinkTimer_ = 0.0f;
+  }
+  
+  // Only draw if in the "on" state
+  if (blinkState_) {
+    const int indicatorSize = 8;
+    
+    // Draw a small filled circle as the indicator
+    filledCircleRGBA(ctx.renderer, *left + indicatorSize/2, *top + ctx.messageFontHeight()/2, 
+                     indicatorSize/2, 
+                     ctx.style->green.r, ctx.style->green.g, ctx.style->green.b, SDL_ALPHA_OPAQUE);
+  }
+  
+  // Reserve space for the indicator (whether visible or not)
+  const int indicatorSize = 8;
+  const int spacing = 4;
+  *left += indicatorSize + spacing;
 }
 
 }  // namespace viz1090

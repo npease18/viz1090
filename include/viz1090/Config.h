@@ -71,6 +71,7 @@ struct AppConfig {
     double centerLon = 0.0;
     double maxDistance = 200.0;  // km or nm depending on metric
     bool metric = true;
+    bool showOriginMarker = true;  // Show origin/home marker
     std::string dataPath = "mapdata";
   } map;
 

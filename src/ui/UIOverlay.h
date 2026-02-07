@@ -103,10 +103,18 @@ public:
                        ThemeSelectedCallback selectedCallback);
 
 private:
+  /// Draw blinking activity indicator
+  void drawBlinkingIndicator(const RenderContext& ctx, int* left, int* top, float deltaTime) const;
+
+private:
   bool showFps{false};
   Button menuButton_;
   MenuPanel menuPanel_;
   FrameAllCallback frameAllCallback_;
+  
+  // Blinking indicator state
+  mutable float blinkTimer_{0.0f};
+  mutable bool blinkState_{false};
 };
 
 }  // namespace viz1090

@@ -1,0 +1,5 @@
+if(EXISTS "/home/npease/software/viz1090-new/viz1090_tests[1]_tests.cmake")
+  include("/home/npease/software/viz1090-new/viz1090_tests[1]_tests.cmake")
+else()
+  add_test(viz1090_tests_NOT_BUILT viz1090_tests_NOT_BUILT)
+endif()

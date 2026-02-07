@@ -55,6 +55,7 @@ showHelp() {
       "--lat <latitude>                 Latitude in degrees\n"
       "--lon <longitude>                Longitude in degrees\n"
       "--metric                         Use metric units\n"
+      "--no-home                       Hide home/origin position indicator\n"
       "--port <port>                    TCP Beast output listen port (default: 30005)\n"
       "--server <IPv4/hosname>          TCP Beast output listen IPv4 (default: 127.0.0.1)\n"
       "--screensize <width> <height>    Set frame buffer resolution (default: screen "
@@ -94,6 +95,8 @@ main(int argc, char** argv) {
       view.getMapView().originSet = true;
     } else if (!std::strcmp(argv[j], "--metric")) {
       view.metric = 1;
+    } else if (!std::strcmp(argv[j], "--no-home")) {
+      view.getMapView().setDrawCenterOrigin(false);
     } else if (!std::strcmp(argv[j], "--fps")) {
       view.getUIOverlay()->setShowFps(1);
     } else if (!std::strcmp(argv[j], "--fullscreen")) {

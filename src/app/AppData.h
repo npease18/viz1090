@@ -38,6 +38,7 @@
 #include <string>
 
 #include "core/AircraftList.h"
+#include "core/Battery.h"
 #include "viz1090/network/ConnectionManager.h"
 
 /// Application data and network management
@@ -89,6 +90,12 @@ public:
   double avgSig = 0.0;
   double msgRate = 0.0;
 
+  /// Get battery status information
+  /// Returns current battery percentage and charging state
+  [[nodiscard]] const viz1090::core::Battery::Status& getBatteryStatus() const { 
+    return mBattery.getStatus(); 
+  }
+
   // For backwards compatibility with View
   [[nodiscard]] bool connected() const { return isConnected(); }
 
@@ -99,6 +106,7 @@ private:
 
   std::unique_ptr<viz1090::network::ConnectionManager> mConnectionManager;
   std::mutex mMessageMutex;
+  mutable viz1090::core::Battery mBattery;
 
   // Timing for stale aircraft removal
   std::chrono::steady_clock::time_point mLastCleanup;

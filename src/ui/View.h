@@ -81,6 +81,12 @@ public:
   /// Get the style manager (for theme list access)
   StyleManager& getStyleManager() { return styleManager_; }
 
+  /// Brightness control
+  void adjustBrightness(int delta);
+  void setBrightness(int level);
+  int getCurrentBrightness() const;
+  int getMaxBrightness() const;
+
   // Configuration
   bool metric{false};
 
@@ -137,6 +143,11 @@ private:
   // State
   int startupState{0};
   bool highFramerate{false};
+  
+  // Brightness control state
+  mutable int currentBrightness_{-1};
+  mutable int maxBrightness_{-1};
+  mutable std::string backlightPath_;
 };
 
 }  // namespace viz1090

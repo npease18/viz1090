@@ -58,6 +58,8 @@ printKeyboardShortcuts() {
       "  D           Toggle label physics debug overlay\n"
       "  [           Show fewer labels (decrease density)\n"
       "  ]           Show more labels (increase density)\n"
+      "  Vol Up      Increase screen brightness\n"
+      "  Vol Down    Decrease screen brightness\n"
       "\n");
 }
 
@@ -179,6 +181,15 @@ Input::getInput() {
           case SDLK_DOWN:
             view->getMapView().animateCenterRelative(
                 0, -0.1f * view->screen_height, view->screen_width, view->screen_height);
+            break;
+
+          // brightness control with volume keys  
+          case SDLK_VOLUMEUP:
+            view->adjustBrightness(view->getMaxBrightness() / 10); // Increase by 10%
+            break;
+
+          case SDLK_VOLUMEDOWN:
+            view->adjustBrightness(-(view->getMaxBrightness() / 10)); // Decrease by 10%
             break;
 
           default:

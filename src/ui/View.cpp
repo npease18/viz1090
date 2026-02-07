@@ -34,6 +34,9 @@
 #include <cmath>
 #include <iostream>
 #include <thread>
+#include <fstream>
+#include <filesystem>
+#include <algorithm>
 
 #include "ui/MathUtils.h"
 
@@ -412,6 +415,118 @@ View::View(AppData* appData)
   // Start map loading in background thread
   std::thread t1(&Map::load, &mapView.map);
   t1.detach();
+}
+
+//
+// Brightness control
+//
+
+void
+View::adjustBrightness(int delta) {
+  int current = getCurrentBrightness();
+  int max = getMaxBrightness();
+  
+  if (current < 0 || max < 0) {
+    std::fprintf(stderr, "Brightness control not available\n");
+    return;
+  }
+  
+  int newLevel = std::max(1, std::min(max, current + delta));
+  setBrightness(newLevel);
+}
+
+void
+View::setBrightness(int level) {
+  if (backlightPath_.empty()) {
+    // Find first available backlight device
+    std::filesystem::path backlightDir("/sys/class/backlight");
+    if (std::filesystem::exists(backlightDir)) {
+      for (const auto& entry : std::filesystem::directory_iterator(backlightDir)) {
+        if (entry.is_directory()) {
+          backlightPath_ = entry.path().string();
+          break;
+        }
+      }
+    }
+    
+    if (backlightPath_.empty()) {
+      std::fprintf(stderr, "No backlight control found\n");
+      return;
+    }
+  }
+  
+  std::string brightnessFile = backlightPath_ + "/brightness";
+  std::ofstream file(brightnessFile);
+  if (file.is_open()) {
+    file << level << std::endl;
+    file.close();
+    currentBrightness_ = level;
+    std::fprintf(stderr, "Brightness set to: %d\n", level);
+  } else {
+    std::fprintf(stderr, "Failed to write to brightness control: %s\n", brightnessFile.c_str());
+  }
+}
+
+int
+View::getCurrentBrightness() const {
+  if (currentBrightness_ >= 0) {
+    return currentBrightness_;
+  }
+  
+  if (backlightPath_.empty()) {
+    // Find first available backlight device
+    std::filesystem::path backlightDir("/sys/class/backlight");
+    if (std::filesystem::exists(backlightDir)) {
+      for (const auto& entry : std::filesystem::directory_iterator(backlightDir)) {
+        if (entry.is_directory()) {
+          backlightPath_ = entry.path().string();
+          break;
+        }
+      }
+    }
+  }
+  
+  if (!backlightPath_.empty()) {
+    std::string brightnessFile = backlightPath_ + "/brightness";
+    std::ifstream file(brightnessFile);
+    if (file.is_open()) {
+      file >> currentBrightness_;
+      file.close();
+    }
+  }
+  
+  return currentBrightness_;
+}
+
+int
+View::getMaxBrightness() const {
+  if (maxBrightness_ >= 0) {
+    return maxBrightness_;
+  }
+  
+  if (backlightPath_.empty()) {
+    // Find first available backlight device
+    std::filesystem::path backlightDir("/sys/class/backlight");
+    if (std::filesystem::exists(backlightDir)) {
+      for (const auto& entry : std::filesystem::directory_iterator(backlightDir)) {
+        if (entry.is_directory()) {
+          backlightPath_ = entry.path().string();
+          break;
+        }
+      }
+    }
+  }
+  
+  if (!backlightPath_.empty()) {
+    std::string maxBrightnessFile = backlightPath_ + "/max_brightness";
+    std::ifstream file(maxBrightnessFile);
+    if (file.is_open()) {
+      file >> maxBrightness_;
+      file.close();
+    }
+  }
+  
+  return maxBrightness_;
 }
 
 View::~View() {

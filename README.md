@@ -164,6 +164,8 @@ Keyboard shortcuts are displayed at startup and can be shown again by pressing `
 | L | Toggle aircraft labels |
 | [ | Show fewer labels (decrease density) |
 | ] | Show more labels (increase density) |
+| Vol Up | Increase screen brightness |
+| Vol Down | Decrease screen brightness |
 
 ### MAPS
 

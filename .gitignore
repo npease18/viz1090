@@ -1,3 +1,4 @@
+# Build artifacts
 *.o
 *.bin
 *.svg
@@ -6,12 +7,12 @@
 .~
 thumbs.db
 
+# Geographic data files
 *.shp
 *.shp*
 *.shx*
 *.shx
 *.geojson
-
 *.cpg
 *.dbf
 *.zip*
@@ -21,8 +22,69 @@ thumbs.db
 airportnames
 mapnames
 
-build
-buildroot
+# CMake build files and outputs
+build/
+CMakeCache.txt
+CMakeFiles/
+CMakeScripts/
+cmake_install.cmake
+CTestTestfile.cmake
+Makefile
+compile_commands.json
+CMakeConfigureLog.yaml
 
-# Ignore the executable, but not the include directory
+# Build directories and outputs
+bin/
+lib/
+_deps/
+
+# Executables and test files
 /viz1090
+viz1090_tests
+viz1090_tests[1]_include.cmake
+viz1090_tests[1]_tests.cmake
+
+# Test results
+Testing/
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Additional compiler outputs
+*.obj
+*.so
+*.dylib
+*.dll
+*.a
+*.lib
+
+# Debug files
+*.dSYM/
+*.pdb
+
+# Logs and temporary files
+*.log
+*.tmp
+*.temp
+
+# OS generated files
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Backup files
+*.bak
+*.backup
+
+# Coverage and profiling
+*.gcov
+*.lcov
+coverage.info
+coverage/
+gmon.out
+*.prof

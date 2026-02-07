@@ -156,6 +156,7 @@ Keyboard shortcuts are displayed at startup and can be shown again by pressing `
 | +/= | Zoom in |
 | - | Zoom out |
 | H | Recenter on startup position (home) |
+| Win Key | Recenter on startup position (home) |
 | A | Frame all aircraft |
 | **Display** | |
 | M | Toggle metric/imperial units |

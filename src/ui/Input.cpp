@@ -48,6 +48,7 @@ printKeyboardShortcuts() {
       "  +/=         Zoom in\n"
       "  -           Zoom out\n"
       "  H           Recenter on startup position (home)\n"
+      "  Win Key     Recenter on startup position (home)\n"
       "  A           Frame all aircraft\n"
       "\n"
       "  Display:\n"
@@ -144,6 +145,11 @@ Input::getInput() {
 
           // recenter on startup position (origin)
           case SDLK_h:
+            view->recenterOnOrigin();
+            break;
+
+          // recenter on startup position (origin) - Windows/Meta key
+          case SDLK_LGUI:
             view->recenterOnOrigin();
             break;
 

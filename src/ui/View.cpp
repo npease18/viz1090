@@ -177,9 +177,10 @@ View::recenterOnOrigin() {
   // Clear any selected aircraft so view doesn't track it
   selectedAircraft = nullptr;
 
-  // Animate to the origin position
+  // Animate to the origin position and reset to default zoom
   mapView.mapTargetLon = mapView.originLon;
   mapView.mapTargetLat = mapView.originLat;
+  mapView.mapTargetMaxDist = 450.0f;  // Default zoom from start-viz1090.sh
   mapView.setMoved();
   highFramerate = true;
 }

@@ -4,9 +4,11 @@ viz1090 Natural Earth Data Map Converter
 
 Converts Natural Earth shapefiles to binary format for viz1090.
 Handles missing input files gracefully by skipping the associated output.
+Processes airports.csv for ICAO codes.
 """
 
 import argparse
+import csv
 import os
 import sys
 
@@ -287,60 +289,77 @@ def process_airportnames(airportnames_file, output_path):
     """Process airport names shapefile to text format."""
     if not os.path.exists(airportnames_file):
         print(f"Warning: Airport names file not found: {airportnames_file}, skipping airportnames")
+def process_iata_airportnames_csv(csv_file, output_path):
+    """Process airports CSV file to extract IATA codes to text format."""
+    if not os.path.exists(csv_file):
+        print(f"Warning: Airports CSV file not found: {csv_file}, skipping airportnames")
         return False
 
     try:
-        shapefile = fiona.open(airportnames_file)
         count = 0
+        
+        with open(csv_file, 'r', encoding='utf-8') as infile, open(output_path, "w") as out_file:
+            csv_reader = csv.DictReader(infile)
+            
+            for row in tqdm(csv_reader, desc="Processing IATA airports"):
+                try:
+                    # Extract coordinates
+                    lat = float(row['latitude_deg'])
+                    lon = float(row['longitude_deg'])
+                    
+                    # Get IATA code
+                    iata_code = row.get('iata_code', '').strip()
+                    
+                    # Only export airports with valid 3-letter IATA codes
+                    if iata_code and len(iata_code) == 3 and iata_code.isalpha():
+                        out_file.write(f"{lon} {lat} {iata_code}\n")
+                        count += 1
+                        
+                except (ValueError, KeyError) as e:
+                    # Skip malformed rows
+                    continue
 
-        with open(output_path, "w") as out_file:
-            for i in tqdm(range(len(shapefile))):
-                xcoord = shapefile[i]['geometry']['coordinates'][0]
-                ycoord = shapefile[i]['geometry']['coordinates'][1]
-                name = shapefile[i]['properties']['iata_code']
-                
-                if name and name.strip():  # Only write non-empty IATA codes
-                    out_file.write(f"{xcoord} {ycoord} {name}\n")
-                    count += 1
-
-        print(f"Wrote {count} airport names to {output_path}")
+        print(f"Wrote {count} IATA airport codes to {output_path}")
         return True
     except Exception as e:
-        print(f"Error processing airport names: {e}")
+        print(f"Error processing IATA airports CSV: {e}")
         return False
 
 
-def process_icao_airportnames(airportnames_file, output_path):
-    """Process airport ICAO codes shapefile to text format."""
-    if not os.path.exists(airportnames_file):
-        print(f"Warning: Airport names file not found: {airportnames_file}, skipping icao_airportnames")
+def process_icao_airportnames_csv(csv_file, output_path):
+    """Process airports CSV file to extract ICAO codes to text format."""
+    if not os.path.exists(csv_file):
+        print(f"Warning: Airports CSV file not found: {csv_file}, skipping icao_airportnames")
         return False
 
     try:
-        shapefile = fiona.open(airportnames_file)
         count = 0
-
-        with open(output_path, "w") as out_file:
-            for i in tqdm(range(len(shapefile))):
-                props = shapefile[i]['properties']
-                xcoord = shapefile[i]['geometry']['coordinates'][0]
-                ycoord = shapefile[i]['geometry']['coordinates'][1]
-                
-                # Try different field names for ICAO codes
-                icao_code = None
-                for field in ['icao_code', 'ICAO', 'icao', 'gps_code']:
-                    if field in props and props[field] and props[field].strip():
-                        icao_code = props[field].strip()
-                        break
-                
-                if icao_code:
-                    out_file.write(f"{xcoord} {ycoord} {icao_code}\n")
-                    count += 1
+        
+        with open(csv_file, 'r', encoding='utf-8') as infile, open(output_path, "w") as out_file:
+            csv_reader = csv.DictReader(infile)
+            
+            for row in tqdm(csv_reader, desc="Processing ICAO airports"):
+                try:
+                    # Extract coordinates
+                    lat = float(row['latitude_deg'])
+                    lon = float(row['longitude_deg'])
+                    
+                    # Get ICAO code
+                    icao_code = row.get('icao_code', '').strip()
+                    
+                    # Only export airports with valid 4-letter ICAO codes
+                    if icao_code and len(icao_code) == 4 and icao_code.isalpha():
+                        out_file.write(f"{lon} {lat} {icao_code}\n")
+                        count += 1
+                        
+                except (ValueError, KeyError) as e:
+                    # Skip malformed rows
+                    continue
 
         print(f"Wrote {count} ICAO airport codes to {output_path}")
         return True
     except Exception as e:
-        print(f"Error processing ICAO airport names: {e}")
+        print(f"Error processing ICAO airports CSV: {e}")
         return False
 
 
@@ -365,10 +384,8 @@ def main():
                         help="shapefile for map place names")
     parser.add_argument("--airportfile", type=str,
                         help="shapefile for airport runway outlines")
-    parser.add_argument("--airportnames", type=str,
-                        help="shapefile for airport IATA names")
     parser.add_argument("--icao-airportnames", type=str,
-                        help="shapefile for airport ICAO codes (same as --airportnames)")
+                        help="CSV file for airport ICAO codes (airports.csv format)")
     parser.add_argument("--minpop", default=100000, type=int,
                         help="minimum population for place names")
     parser.add_argument("--tolerance", default=0.001, type=float,
@@ -440,25 +457,11 @@ def main():
         if process_airportfile(args.airportfile, output_path):
             success_count += 1
 
-    # Process airport names (IATA codes)
-    if args.airportnames is not None:
-        total_count += 1
-        output_path = os.path.join(args.output_dir, "airportnames")
-        if process_airportnames(args.airportnames, output_path):
-            success_count += 1
-
-    # Process ICAO airport names (same source file, different codes)
+    # Process ICAO airport names from CSV
     if args.icao_airportnames is not None:
         total_count += 1
         output_path = os.path.join(args.output_dir, "icao_airportnames")
-        if process_icao_airportnames(args.icao_airportnames, output_path):
-            success_count += 1
-
-    # Process ICAO airport names
-    if args.icao_airportnames is not None:
-        total_count += 1
-        output_path = os.path.join(args.output_dir, "icao_airportnames")
-        if process_icao_airportnames(args.icao_airportnames, output_path):
+        if process_icao_airportnames_csv(args.icao_airportnames, output_path):
             success_count += 1
 
     print(f"\nCompleted: {success_count}/{total_count} outputs generated successfully")

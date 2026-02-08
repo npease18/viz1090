@@ -29,6 +29,7 @@
 #include "ui/MapView.h"
 
 #include <cmath>
+#include <cstdlib>
 #include <cstring>
 #include <vector>
 
@@ -510,10 +511,11 @@ void MapView::drawPlaceNames(const RenderContext& ctx) {
     int width, height;
     Uint8 alpha{255};
     bool isAirportCode{false};  // True for ICAO airport codes, false for place names/IATA
+    bool isPlaceName{false};   // True for city/place names
   };
 
   std::vector<VisibleLabel> visibleLabels;
-  visibleLabels.reserve(map.mapnames.size() + map.airportnames.size() + map.icao_airportnames.size());
+  visibleLabels.reserve(map.mapnames.size() + map.icao_airportnames.size());
 
   // Estimate text dimensions based on font metrics
   int charWidth = ctx.mapFontWidth();
@@ -537,32 +539,11 @@ void MapView::drawPlaceNames(const RenderContext& ctx) {
     vl.y = y;
     vl.width = static_cast<int>(label->text.length()) * charWidth;
     vl.height = charHeight;
+    vl.isPlaceName = true;  // Mark as place name for priority
     visibleLabels.push_back(vl);
   }
 
-  // Collect airport names (IATA codes)
-  for (const auto& label : map.airportnames) {
-    float dx, dy;
-    int x, y;
-
-    pxFromLonLat(&dx, &dy, label->location.lon, label->location.lat);
-    screenCoords(&x, &y, dx, dy, ctx.screenWidth, ctx.screenHeight);
-
-    if (x < 0 || x >= ctx.screenWidth || y < 0 || y >= ctx.screenHeight) {
-      continue;
-    }
-
-    VisibleLabel vl;
-    vl.text = label->text;
-    vl.x = x;
-    vl.y = y;
-    vl.width = static_cast<int>(label->text.length()) * charWidth;
-    vl.height = charHeight;
-    vl.isAirportCode = false;  // IATA codes use default color
-    visibleLabels.push_back(vl);
-  }
-
-  // Collect ICAO airport codes
+  // Collect ICAO airport codes (only if not too close to existing place names)
   for (const auto& label : map.icao_airportnames) {
     float dx, dy;
     int x, y;
@@ -574,19 +555,33 @@ void MapView::drawPlaceNames(const RenderContext& ctx) {
       continue;
     }
 
-    VisibleLabel vl;
-    vl.text = label->text;
-    vl.x = x;
-    vl.y = y;
-    // Use bold font width for ICAO codes since they use bold font
-    vl.width = static_cast<int>(label->text.length()) * ctx.mapBoldFontWidth();
-    vl.height = ctx.mapBoldFontHeight();
-    vl.isAirportCode = true;  // ICAO codes use orange color and bold font
-    visibleLabels.push_back(vl);
+    // Check if there's already a place name very close to this position
+    bool tooCloseToExisting = false;
+    for (const auto& existing : visibleLabels) {
+      if (existing.isPlaceName) { // Check against place names only
+        int distance = std::abs(x - existing.x) + std::abs(y - existing.y); // Manhattan distance
+        if (distance < 30) { // If within 30 pixels, consider it overlapping
+          tooCloseToExisting = true;
+          break;
+        }
+      }
+    }
+
+    if (!tooCloseToExisting) {
+      VisibleLabel vl;
+      vl.text = label->text;
+      vl.x = x;
+      vl.y = y;
+      // Use bold font width for ICAO codes since they use bold font
+      vl.width = static_cast<int>(label->text.length()) * ctx.mapBoldFontWidth();
+      vl.height = ctx.mapBoldFontHeight();
+      vl.isAirportCode = true;  // ICAO codes use orange color and bold font
+      visibleLabels.push_back(vl);
+    }
   }
 
   // Detect overlaps and assign alpha values
-  // Use greedy approach with priority: ICAO codes > IATA codes > place names
+  // Priority: Place names (cities) > Airport codes (both IATA and ICAO)
   // Add padding around labels for overlap detection
   int padding = charWidth;
 
@@ -622,12 +617,15 @@ void MapView::drawPlaceNames(const RenderContext& ctx) {
                         aBottom < bTop || bBottom < aTop);
 
       if (overlaps) {
-        // Priority: ICAO codes (isAirportCode=true) > IATA codes > place names
-        if (labelB.isAirportCode && !labelA.isAirportCode) {
-          // ICAO code (B) wins over IATA/place name (A)
+        // Priority: Place names > Airport codes
+        if (labelA.isPlaceName && (labelB.isAirportCode || !labelB.isPlaceName)) {
+          // Place name (A) wins over any airport code (B)
+          labelB.alpha = 0;
+        } else if (labelB.isPlaceName && (labelA.isAirportCode || !labelA.isPlaceName)) {
+          // Place name (B) wins over any airport code (A)
           labelA.alpha = 0;
         } else {
-          // Default: fade out the later label (labelB)
+          // Same priority: fade out the later label (labelB)
           labelB.alpha = 0;
         }
       }

@@ -234,9 +234,11 @@ if [[ -f "${MAPDATA_DIR}/Runways.shp" ]]; then
     CONVERTER_ARGS="${CONVERTER_ARGS} --airportfile ${MAPDATA_DIR}/Runways.shp"
 fi
 
-if [[ -f "${MAPDATA_DIR}/ne_10m_airports.shp" ]]; then
-    CONVERTER_ARGS="${CONVERTER_ARGS} --airportnames ${MAPDATA_DIR}/ne_10m_airports.shp"
-    CONVERTER_ARGS="${CONVERTER_ARGS} --icao-airportnames ${MAPDATA_DIR}/ne_10m_airports.shp"
+# Use airports.csv for ICAO codes if available
+if [[ -f "${SCRIPT_DIR}/mapdata/airports.csv" ]]; then
+    CONVERTER_ARGS="${CONVERTER_ARGS} --icao-airportnames ${SCRIPT_DIR}/mapdata/airports.csv"
+else
+    echo "Warning: airports.csv not found for ICAO codes"
 fi
 
 # Run the converter
@@ -245,4 +247,4 @@ python3 "${SCRIPT_DIR}/mapconverter.py" ${CONVERTER_ARGS}
 echo ""
 echo "=== Map data generation complete ==="
 echo "Generated files in: ${OUTPUT_DIR}"
-ls -la "${OUTPUT_DIR}"/*.bin "${OUTPUT_DIR}"/mapnames "${OUTPUT_DIR}"/airportnames "${OUTPUT_DIR}"/icao_airportnames 2>/dev/null || true
+ls -la "${OUTPUT_DIR}"/*.bin "${OUTPUT_DIR}"/mapnames "${OUTPUT_DIR}"/icao_airportnames 2>/dev/null || true

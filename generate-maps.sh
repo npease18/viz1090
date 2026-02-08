@@ -5,8 +5,7 @@ python3 src/tools/mapconverter.py \
     --mapfile mapdata/ne_10m_admin_1_states_provinces.shp \
     --mapnames mapdata/ne_10m_populated_places.shp \
     --airportfile mapdata/Runways.shp \
-    --airportnames mapdata/ne_10m_airports.shp \
-    --icao-airportnames mapdata/ne_10m_airports.shp \
+    --icao-airportnames src/tools/mapdata/airports.csv \
     --minpop 10000 \
     --output-dir .
 

@@ -663,33 +663,6 @@ Map::load() {
 
   infile.close();
 
-  infile.open("airportnames");
-
-  while (std::getline(infile, line)) {
-    float lon, lat;
-
-    std::istringstream iss(line);
-
-    iss >> lon;
-    iss >> lat;
-
-    std::string assemble;
-
-    iss >> assemble;
-
-    for (std::string s; iss >> s;) {
-      assemble = assemble + " " + s;
-    }
-
-    // std::cout << "[" << x << "," << y << "] " << assemble << "\n";
-    MapLabel* label = new MapLabel(lon, lat, assemble);
-    airportnames.push_back(label);
-  }
-
-  std::cout << "Read " << airportnames.size() << " airport names\n";
-
-  infile.close();
-
   // Load ICAO airport names
   infile.open("icao_airportnames");
 

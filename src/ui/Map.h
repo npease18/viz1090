@@ -156,6 +156,7 @@ public:
 
   std::vector<MapLabel*> mapnames;
   std::vector<MapLabel*> airportnames;
+  std::vector<MapLabel*> icao_airportnames;  // ICAO airport codes
 
   // Land polygons for filling
   std::vector<Polygon> landPolygons;

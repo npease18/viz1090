@@ -88,3 +88,4 @@ coverage.info
 coverage/
 gmon.out
 *.prof
+icao_airportnames

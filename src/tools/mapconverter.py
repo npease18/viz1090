@@ -298,14 +298,49 @@ def process_airportnames(airportnames_file, output_path):
                 xcoord = shapefile[i]['geometry']['coordinates'][0]
                 ycoord = shapefile[i]['geometry']['coordinates'][1]
                 name = shapefile[i]['properties']['iata_code']
-
-                out_file.write(f"{xcoord} {ycoord} {name}\n")
-                count += 1
+                
+                if name and name.strip():  # Only write non-empty IATA codes
+                    out_file.write(f"{xcoord} {ycoord} {name}\n")
+                    count += 1
 
         print(f"Wrote {count} airport names to {output_path}")
         return True
     except Exception as e:
         print(f"Error processing airport names: {e}")
+        return False
+
+
+def process_icao_airportnames(airportnames_file, output_path):
+    """Process airport ICAO codes shapefile to text format."""
+    if not os.path.exists(airportnames_file):
+        print(f"Warning: Airport names file not found: {airportnames_file}, skipping icao_airportnames")
+        return False
+
+    try:
+        shapefile = fiona.open(airportnames_file)
+        count = 0
+
+        with open(output_path, "w") as out_file:
+            for i in tqdm(range(len(shapefile))):
+                props = shapefile[i]['properties']
+                xcoord = shapefile[i]['geometry']['coordinates'][0]
+                ycoord = shapefile[i]['geometry']['coordinates'][1]
+                
+                # Try different field names for ICAO codes
+                icao_code = None
+                for field in ['icao_code', 'ICAO', 'icao', 'gps_code']:
+                    if field in props and props[field] and props[field].strip():
+                        icao_code = props[field].strip()
+                        break
+                
+                if icao_code:
+                    out_file.write(f"{xcoord} {ycoord} {icao_code}\n")
+                    count += 1
+
+        print(f"Wrote {count} ICAO airport codes to {output_path}")
+        return True
+    except Exception as e:
+        print(f"Error processing ICAO airport names: {e}")
         return False
 
 
@@ -332,6 +367,8 @@ def main():
                         help="shapefile for airport runway outlines")
     parser.add_argument("--airportnames", type=str,
                         help="shapefile for airport IATA names")
+    parser.add_argument("--icao-airportnames", type=str,
+                        help="shapefile for airport ICAO codes (same as --airportnames)")
     parser.add_argument("--minpop", default=100000, type=int,
                         help="minimum population for place names")
     parser.add_argument("--tolerance", default=0.001, type=float,
@@ -403,11 +440,25 @@ def main():
         if process_airportfile(args.airportfile, output_path):
             success_count += 1
 
-    # Process airport names
+    # Process airport names (IATA codes)
     if args.airportnames is not None:
         total_count += 1
         output_path = os.path.join(args.output_dir, "airportnames")
         if process_airportnames(args.airportnames, output_path):
+            success_count += 1
+
+    # Process ICAO airport names (same source file, different codes)
+    if args.icao_airportnames is not None:
+        total_count += 1
+        output_path = os.path.join(args.output_dir, "icao_airportnames")
+        if process_icao_airportnames(args.icao_airportnames, output_path):
+            success_count += 1
+
+    # Process ICAO airport names
+    if args.icao_airportnames is not None:
+        total_count += 1
+        output_path = os.path.join(args.output_dir, "icao_airportnames")
+        if process_icao_airportnames(args.icao_airportnames, output_path):
             success_count += 1
 
     print(f"\nCompleted: {success_count}/{total_count} outputs generated successfully")

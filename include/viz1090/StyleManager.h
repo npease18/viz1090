@@ -84,6 +84,9 @@ struct Theme {
   SDL_Color buttonOutline{196, 196, 196, 255};
   SDL_Color clickColor{127, 127, 127, 255};
 
+  // Airport code color (for ICAO codes) - Bright vibrant orange for visibility
+  SDL_Color airportCodeColor{255, 165, 0, 255};  // Brighter orange
+
   // Named palette colors
   SDL_Color black{0, 0, 0, 255};
   SDL_Color white{255, 255, 255, 255};

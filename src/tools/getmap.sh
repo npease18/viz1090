@@ -236,6 +236,7 @@ fi
 
 if [[ -f "${MAPDATA_DIR}/ne_10m_airports.shp" ]]; then
     CONVERTER_ARGS="${CONVERTER_ARGS} --airportnames ${MAPDATA_DIR}/ne_10m_airports.shp"
+    CONVERTER_ARGS="${CONVERTER_ARGS} --icao-airportnames ${MAPDATA_DIR}/ne_10m_airports.shp"
 fi
 
 # Run the converter
@@ -244,4 +245,4 @@ python3 "${SCRIPT_DIR}/mapconverter.py" ${CONVERTER_ARGS}
 echo ""
 echo "=== Map data generation complete ==="
 echo "Generated files in: ${OUTPUT_DIR}"
-ls -la "${OUTPUT_DIR}"/*.bin "${OUTPUT_DIR}"/mapnames "${OUTPUT_DIR}"/airportnames 2>/dev/null || true
+ls -la "${OUTPUT_DIR}"/*.bin "${OUTPUT_DIR}"/mapnames "${OUTPUT_DIR}"/airportnames "${OUTPUT_DIR}"/icao_airportnames 2>/dev/null || true

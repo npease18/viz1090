@@ -509,10 +509,11 @@ void MapView::drawPlaceNames(const RenderContext& ctx) {
     int x, y;
     int width, height;
     Uint8 alpha{255};
+    bool isAirportCode{false};  // True for ICAO airport codes, false for place names/IATA
   };
 
   std::vector<VisibleLabel> visibleLabels;
-  visibleLabels.reserve(map.mapnames.size() + map.airportnames.size());
+  visibleLabels.reserve(map.mapnames.size() + map.airportnames.size() + map.icao_airportnames.size());
 
   // Estimate text dimensions based on font metrics
   int charWidth = ctx.mapFontWidth();
@@ -539,7 +540,7 @@ void MapView::drawPlaceNames(const RenderContext& ctx) {
     visibleLabels.push_back(vl);
   }
 
-  // Collect airport names
+  // Collect airport names (IATA codes)
   for (const auto& label : map.airportnames) {
     float dx, dy;
     int x, y;
@@ -557,11 +558,35 @@ void MapView::drawPlaceNames(const RenderContext& ctx) {
     vl.y = y;
     vl.width = static_cast<int>(label->text.length()) * charWidth;
     vl.height = charHeight;
+    vl.isAirportCode = false;  // IATA codes use default color
+    visibleLabels.push_back(vl);
+  }
+
+  // Collect ICAO airport codes
+  for (const auto& label : map.icao_airportnames) {
+    float dx, dy;
+    int x, y;
+
+    pxFromLonLat(&dx, &dy, label->location.lon, label->location.lat);
+    screenCoords(&x, &y, dx, dy, ctx.screenWidth, ctx.screenHeight);
+
+    if (x < 0 || x >= ctx.screenWidth || y < 0 || y >= ctx.screenHeight) {
+      continue;
+    }
+
+    VisibleLabel vl;
+    vl.text = label->text;
+    vl.x = x;
+    vl.y = y;
+    // Use bold font width for ICAO codes since they use bold font
+    vl.width = static_cast<int>(label->text.length()) * ctx.mapBoldFontWidth();
+    vl.height = ctx.mapBoldFontHeight();
+    vl.isAirportCode = true;  // ICAO codes use orange color and bold font
     visibleLabels.push_back(vl);
   }
 
   // Detect overlaps and assign alpha values
-  // Use greedy approach: first label stays visible, overlapping ones fade out
+  // Use greedy approach with priority: ICAO codes > IATA codes > place names
   // Add padding around labels for overlap detection
   int padding = charWidth;
 
@@ -597,25 +622,41 @@ void MapView::drawPlaceNames(const RenderContext& ctx) {
                         aBottom < bTop || bBottom < aTop);
 
       if (overlaps) {
-        // Fade out the later label (labelB)
-        labelB.alpha = 0;
+        // Priority: ICAO codes (isAirportCode=true) > IATA codes > place names
+        if (labelB.isAirportCode && !labelA.isAirportCode) {
+          // ICAO code (B) wins over IATA/place name (A)
+          labelA.alpha = 0;
+        } else {
+          // Default: fade out the later label (labelB)
+          labelB.alpha = 0;
+        }
       }
     }
   }
 
   // Draw all labels with their computed alpha
   Label currentLabel;
+  Label airportLabel;  // Separate label for airport codes with different font
   currentLabel.setFont(ctx.mapFont());
-  currentLabel.setColor(ctx.style->geoColor);
+  airportLabel.setFont(ctx.mapBoldFont());  // Use bold font for airports
 
   for (const auto& vl : visibleLabels) {
     if (vl.alpha == 0) {
       continue;
     }
 
-    currentLabel.setText(vl.text);
-    currentLabel.setPosition(vl.x, vl.y);
-    currentLabel.draw(ctx.renderer, vl.alpha);
+    // Use orange color and bold font for ICAO airport codes
+    if (vl.isAirportCode) {
+      airportLabel.setColor(ctx.style->airportCodeColor);
+      airportLabel.setText(vl.text);
+      airportLabel.setPosition(vl.x, vl.y);
+      airportLabel.draw(ctx.renderer, vl.alpha);
+    } else {
+      currentLabel.setColor(ctx.style->geoColor);
+      currentLabel.setText(vl.text);
+      currentLabel.setPosition(vl.x, vl.y);
+      currentLabel.draw(ctx.renderer, vl.alpha);
+    }
   }
 }
 

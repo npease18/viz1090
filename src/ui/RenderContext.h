@@ -118,6 +118,8 @@ struct RenderContext {
   [[nodiscard]] TTF_Font* listFont() const { return fonts ? fonts->list.font : nullptr; }
   [[nodiscard]] int mapFontWidth() const { return fonts ? fonts->map.width : 5; }
   [[nodiscard]] int mapFontHeight() const { return fonts ? fonts->map.height : 12; }
+  [[nodiscard]] int mapBoldFontWidth() const { return fonts ? fonts->mapBold.width : 6; }
+  [[nodiscard]] int mapBoldFontHeight() const { return fonts ? fonts->mapBold.height : 12; }
   [[nodiscard]] int labelFontWidth() const { return fonts ? fonts->label.width : 6; }
   [[nodiscard]] int labelFontHeight() const { return fonts ? fonts->label.height : 12; }
   [[nodiscard]] int messageFontWidth() const { return fonts ? fonts->message.width : 6; }

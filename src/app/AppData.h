@@ -68,6 +68,12 @@ public:
   /// Check if connected
   [[nodiscard]] bool isConnected() const;
 
+  /// Populate aircraft list with test data (for test mode)
+  void loadTestData();
+
+  /// Enable test mode (uses sample data instead of network)
+  void setTestMode(bool enabled) { mTestMode = enabled; }
+
   // Configuration (set before connect())
   std::string server = "127.0.0.1";
   uint16_t port = 30005;
@@ -105,6 +111,9 @@ private:
   void removeStaleAircraft();
 
   std::unique_ptr<viz1090::network::ConnectionManager> mConnectionManager;
+  
+  // Test mode flag
+  bool mTestMode = false;
   std::mutex mMessageMutex;
   mutable viz1090::core::Battery mBattery;
 

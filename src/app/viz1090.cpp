@@ -62,7 +62,8 @@ showHelp() {
       "resolution)\n"
       "--screenindex <i>                Set the index of the display to use (default: 0)\n"
       "--uiscale <factor>               UI global scaling (default: 1)\n"
-      "--zoom <km>                      Initial map radius in km (default: 25)\n");
+      "--zoom <km>                      Initial map radius in km (default: 25)\n"
+      "--test-mode                      Use built-in test data (no network connection required)\n");
 }
 
 //
@@ -74,6 +75,7 @@ main(int argc, char** argv) {
   AppData appData;
   viz1090::View view(&appData);
   bool flipTouch = false;
+  bool testMode = false;
 
   // Parse the command line options
   for (int j = 1; j < argc; j++) {
@@ -85,14 +87,8 @@ main(int argc, char** argv) {
       appData.server = argv[++j];
     } else if (!std::strcmp(argv[j], "--lat") && more) {
       appData.userLat = std::atof(argv[++j]);
-      view.getMapView().centerLat = static_cast<float>(appData.userLat);
-      view.getMapView().originLat = view.getMapView().centerLat;
-      view.getMapView().originSet = true;
     } else if (!std::strcmp(argv[j], "--lon") && more) {
       appData.userLon = std::atof(argv[++j]);
-      view.getMapView().centerLon = static_cast<float>(appData.userLon);
-      view.getMapView().originLon = view.getMapView().centerLon;
-      view.getMapView().originSet = true;
     } else if (!std::strcmp(argv[j], "--metric")) {
       view.metric = 1;
     } else if (!std::strcmp(argv[j], "--no-home")) {
@@ -115,6 +111,8 @@ main(int argc, char** argv) {
     } else if (!std::strcmp(argv[j], "--help")) {
       showHelp();
       std::exit(0);
+    } else if (!std::strcmp(argv[j], "--test-mode")) {
+      testMode = true;
     } else {
       std::fprintf(stderr, "Unknown or not enough arguments for option '%s'.\n\n",
                    argv[j]);
@@ -133,8 +131,21 @@ main(int argc, char** argv) {
 
   std::signal(SIGINT, SIG_DFL);  // reset signal handler - bit extra safety
 
-  // Start connection
-  appData.connect();
+  // Set up map center coordinates
+  // In test mode, override command line coordinates with test data location
+  if (testMode) {
+    appData.loadTestData();
+    std::fprintf(stderr, "Running in test mode with sample aircraft data\n");
+  } else {
+    appData.connect();
+  }
+  
+  // Set map view coordinates (after test data is loaded if in test mode)
+  view.getMapView().centerLat = static_cast<float>(appData.userLat);
+  view.getMapView().centerLon = static_cast<float>(appData.userLon);
+  view.getMapView().originLat = view.getMapView().centerLat;
+  view.getMapView().originLon = view.getMapView().centerLon;
+  view.getMapView().originSet = true;
 
   // Show keyboard shortcuts at startup
   printKeyboardShortcuts();
@@ -146,7 +157,9 @@ main(int argc, char** argv) {
     appData.update();
   }
 
-  appData.disconnect();
+  if (!testMode) {
+    appData.disconnect();
+  }
 
   return 0;
 }

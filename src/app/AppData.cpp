@@ -32,6 +32,7 @@
 #include "app/AppData.h"
 
 #include <cstdio>
+#include "viz1090/TestData.h"
 
 AppData::AppData()
     : mConnectionManager(std::make_unique<viz1090::network::ConnectionManager>()),
@@ -84,14 +85,18 @@ AppData::disconnect() {
 
 bool
 AppData::isConnected() const {
+  // In test mode, always report as connected
+  if (mTestMode) {
+    return true;
+  }
   return mConnectionManager->isConnected();
 }
 
 void
 AppData::update() {
-  // Remove stale aircraft periodically
+  // Remove stale aircraft periodically (skip in test mode)
   auto now = std::chrono::steady_clock::now();
-  if (now - mLastCleanup > kCleanupInterval) {
+  if (!mTestMode && now - mLastCleanup > kCleanupInterval) {
     removeStaleAircraft();
     mLastCleanup = now;
   }
@@ -147,4 +152,64 @@ AppData::updateStatus() {
   } else {
     avgSig = 0.0;
   }
+}
+
+void
+AppData::loadTestData() {
+  std::lock_guard<std::mutex> lock(mMessageMutex);
+  
+  // Enable test mode
+  mTestMode = true;
+  
+  // Clear any existing aircraft by removing all stale aircraft with 0 TTL
+  aircraftList.removeStale(std::chrono::seconds{0});
+  
+  // Set receiver position to test location
+  userLat = viz1090::kTestReceiverLat;
+  userLon = viz1090::kTestReceiverLon;
+  
+  // Create aircraft from test data
+  auto currentTime = std::chrono::high_resolution_clock::now();
+  
+  for (const auto& testData : viz1090::kTestAircraftData) {
+    auto* aircraft = aircraftList.findOrCreate(testData.icao);
+    
+    // Set basic identity
+    std::strncpy(aircraft->flight, testData.callsign, sizeof(aircraft->flight) - 1);
+    aircraft->flight[sizeof(aircraft->flight) - 1] = '\0';
+    
+    // Set position
+    aircraft->lat = static_cast<float>(testData.latitude);
+    aircraft->lon = static_cast<float>(testData.longitude);
+    
+    // Set flight parameters
+    aircraft->altitude = testData.altitude;
+    aircraft->speed = testData.speed;
+    aircraft->track = testData.heading;
+    aircraft->vert_rate = testData.verticalRate;
+    
+    // Set timing
+    aircraft->seen = std::time(nullptr);
+    aircraft->seenLatLon = aircraft->seen;
+    aircraft->msSeen = currentTime;
+    aircraft->msSeenLatLon = currentTime;
+    aircraft->created = currentTime;
+    
+    // Set signal levels (simulate good reception)
+    for (int i = 0; i < 8; i++) {
+      aircraft->signalLevel[i] = 180 + (testData.icao % 40); // Vary signal by ICAO
+    }
+    
+    // Set message rate (simulate active aircraft)
+    aircraft->messageRate = 5.0f + static_cast<float>(testData.icao % 20) / 10.0f;
+    
+    // Mark as active
+    aircraft->live = 1;
+    
+    // Debug output
+    std::fprintf(stderr, "Test aircraft %s: lat=%.4f, lon=%.4f, alt=%d\n", 
+                 aircraft->flight, aircraft->lat, aircraft->lon, aircraft->altitude);
+  }
+  
+  std::fprintf(stderr, "Loaded %zu test aircraft\n", viz1090::kTestAircraftData.size());
 }

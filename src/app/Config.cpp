@@ -74,6 +74,7 @@ Font options:
 
 Other options:
   --help                Show this help message
+  --test-mode           Use built-in test data (no network connection required)
 
 )", aProgramName);
 }
@@ -176,6 +177,10 @@ parseArgs(int aArgc, char* aArgv[], AppConfig& aConfig) {
     else if (std::strcmp(arg, "--help") == 0 || std::strcmp(arg, "-h") == 0) {
       printUsage(aArgv[0]);
       return false;
+    }
+    // Test mode
+    else if (std::strcmp(arg, "--test-mode") == 0) {
+      aConfig.testMode = true;
     }
     // Unknown option
     else if (arg[0] == '-') {

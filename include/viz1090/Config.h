@@ -44,6 +44,9 @@ namespace viz1090 {
 /// Centralizes all configurable parameters with sensible defaults.
 /// Can be populated from command-line arguments or config file.
 struct AppConfig {
+  // Test mode settings
+  bool testMode = false;  // Use built-in test data instead of network
+
   // Network settings
   struct Network {
     std::string host = "127.0.0.1";

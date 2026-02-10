@@ -104,7 +104,7 @@ public:
 
 private:
   /// Draw blinking activity indicator
-  void drawBlinkingIndicator(const RenderContext& ctx, int* left, int* top, float deltaTime) const;
+  void drawBlinkingIndicator(const RenderContext& ctx, int* left, int* top, float deltaTime, bool isConnected) const;
 
 private:
   bool showFps{false};

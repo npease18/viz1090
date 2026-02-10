@@ -147,7 +147,7 @@ void UIOverlay::draw(const RenderContext& ctx, const AppData& appData, float las
   int top = ctx.screenHeight - ctx.messageFontHeight() - ctx.padding();
 
   // Draw blinking indicator first (leftmost position)
-  drawBlinkingIndicator(ctx, &left, &top, lastFrameTime);
+  drawBlinkingIndicator(ctx, &left, &top, lastFrameTime, appData.isConnected());
 
   // Draw battery status (right after blinking indicator)
   const auto& batteryStatus = appData.getBatteryStatus();
@@ -322,28 +322,36 @@ UIOverlay::StatusBarBounds UIOverlay::calculateStatusBarBounds(const RenderConte
   return bounds;
 }
 
-void UIOverlay::drawBlinkingIndicator(const RenderContext& ctx, int* left, int* top, float deltaTime) const {
-  // Update blink timer (accumulate time)
-  blinkTimer_ += deltaTime;
+void UIOverlay::drawBlinkingIndicator(const RenderContext& ctx, int* left, int* top, float deltaTime, bool isConnected) const {
+  const int indicatorSize = 8;
   
-  // Toggle blink state every 500ms (0.5 seconds)
-  if (blinkTimer_ >= 500.0f) {
-    blinkState_ = !blinkState_;
-    blinkTimer_ = 0.0f;
-  }
-  
-  // Only draw if in the "on" state
-  if (blinkState_) {
-    const int indicatorSize = 8;
+  if (isConnected) {
+    // Backend connected: use blinking green indicator
+    // Update blink timer (accumulate time)
+    blinkTimer_ += deltaTime;
     
-    // Draw a small filled circle as the indicator
+    // Toggle blink state every 500ms (0.5 seconds)
+    if (blinkTimer_ >= 500.0f) {
+      blinkState_ = !blinkState_;
+      blinkTimer_ = 0.0f;
+    }
+    
+    // Only draw if in the "on" state
+    if (blinkState_) {
+      // Draw a small filled circle as the indicator
+      filledCircleRGBA(ctx.renderer, *left + indicatorSize/2, *top + ctx.messageFontHeight()/2, 
+                       indicatorSize/2, 
+                       ctx.style->green.r, ctx.style->green.g, ctx.style->green.b, SDL_ALPHA_OPAQUE);
+    }
+  } else {
+    // Backend not connected: show solid red indicator
+    // Draw a small filled red circle as the indicator
     filledCircleRGBA(ctx.renderer, *left + indicatorSize/2, *top + ctx.messageFontHeight()/2, 
                      indicatorSize/2, 
-                     ctx.style->green.r, ctx.style->green.g, ctx.style->green.b, SDL_ALPHA_OPAQUE);
+                     ctx.style->red.r, ctx.style->red.g, ctx.style->red.b, SDL_ALPHA_OPAQUE);
   }
   
   // Reserve space for the indicator (whether visible or not)
-  const int indicatorSize = 8;
   const int spacing = 4;
   *left += indicatorSize + spacing;
 }

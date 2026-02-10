@@ -62,6 +62,10 @@ URL_AIRPORTS="https://raw.githubusercontent.com/nvkelso/natural-earth-vector/mas
 # Source: FAA Aeronautical Data Delivery Service via ArcGIS Hub
 URL_RUNWAYS="https://hub.arcgis.com/api/v3/datasets/4d8fa46181aa470d809776c57a8ab1f6_0/downloads/data?format=shp&spatialRefId=4269&where=1%3D1"
 
+# Airport data with ICAO codes (CSV format)
+# Source: OurAirports.com via David Megginson
+URL_AIRPORTS_CSV="https://davidmegginson.github.io/ourairports-data/airports.csv"
+
 #=============================================================================
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -193,6 +197,11 @@ echo ""
 download_shapefile_zip "${URL_RUNWAYS}" "${MAPDATA_DIR}" "Runways" || true
 echo ""
 
+# Download airports CSV data
+echo "Downloading airports CSV data..."
+download_file "${URL_AIRPORTS_CSV}" "${MAPDATA_DIR}/airports.csv" || true
+echo ""
+
 echo "Converting to viz1090 format..."
 
 # Build arguments based on what files exist
@@ -201,6 +210,8 @@ CONVERTER_ARGS="--output-dir ${OUTPUT_DIR} --minpop 10000"
 if [[ -f "${MAPDATA_DIR}/ne_10m_land.shp" ]]; then
     CONVERTER_ARGS="${CONVERTER_ARGS} --landfile ${MAPDATA_DIR}/ne_10m_land.shp"
 fi
+# Always include airports.csv file
+CONVERTER_ARGS="${CONVERTER_ARGS} --airports-csv ${MAPDATA_DIR}/airports.csv"
 
 if [[ -f "${MAPDATA_DIR}/ne_10m_admin_1_states_provinces.shp" ]]; then
     CONVERTER_ARGS="${CONVERTER_ARGS} --mapfile ${MAPDATA_DIR}/ne_10m_admin_1_states_provinces.shp"
@@ -232,13 +243,6 @@ fi
 
 if [[ -f "${MAPDATA_DIR}/Runways.shp" ]]; then
     CONVERTER_ARGS="${CONVERTER_ARGS} --airportfile ${MAPDATA_DIR}/Runways.shp"
-fi
-
-# Use airports.csv for ICAO codes if available
-if [[ -f "${SCRIPT_DIR}/mapdata/airports.csv" ]]; then
-    CONVERTER_ARGS="${CONVERTER_ARGS} --icao-airportnames ${SCRIPT_DIR}/mapdata/airports.csv"
-else
-    echo "Warning: airports.csv not found for ICAO codes"
 fi
 
 # Run the converter

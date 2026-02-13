@@ -152,8 +152,22 @@ void UIOverlay::draw(const RenderContext& ctx, const AppData& appData, float las
   // Draw battery status (right after blinking indicator)
   const auto& batteryStatus = appData.getBatteryStatus();
   if (batteryStatus.isPresent && batteryStatus.isValid) {
-    char batteryStr[20];
-    snprintf(batteryStr, 20, "%d%%", batteryStatus.percentage);
+    char batteryStr[40];
+    
+    // Always show both percentage and runtime estimate
+    if (batteryStatus.hasRuntimeEstimate && batteryStatus.remainingMinutes >= 0) {
+      int hours = batteryStatus.remainingMinutes / 60;
+      int minutes = batteryStatus.remainingMinutes % 60;
+      
+      if (hours > 0) {
+        snprintf(batteryStr, 40, "%d%% %dh%02dm", batteryStatus.percentage, hours, minutes);
+      } else {
+        snprintf(batteryStr, 40, "%d%% %dm", batteryStatus.percentage, minutes);
+      }
+    } else {
+      // Fallback to percentage only if no runtime estimate
+      snprintf(batteryStr, 40, "%d%%", batteryStatus.percentage);
+    }
     
     // Choose color: white (like other status elements) normally, amber when charging
     SDL_Color batteryColor;
@@ -269,10 +283,16 @@ UIOverlay::StatusBarBounds UIOverlay::calculateStatusBarBounds(const RenderConte
     simulateStatusBox("fps", 5);
   }
 
-  // Simulate battery status if present: "bat" + "XXX%" (up to 4 chars)
+  // Simulate battery status if present: "bat" + percentage + runtime estimate
   const auto& batteryStatus = appData.getBatteryStatus();
   if (batteryStatus.isPresent && batteryStatus.isValid) {
-    simulateStatusBox("bat", 4);  // Account for worst case "100%"
+    if (batteryStatus.hasRuntimeEstimate && batteryStatus.remainingMinutes >= 0) {
+      // Account for worst case display "100% 99h59m" (11 chars)
+      simulateStatusBox("bat", 11);
+    } else {
+      // Fallback to percentage only "100%" (4 chars)
+      simulateStatusBox("bat", 4);
+    }
   }
 
   if (!appData.connected()) {

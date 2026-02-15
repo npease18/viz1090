@@ -68,7 +68,7 @@ public:
                 TTF_Font* font, const Style& style);
 
   /// Update label text from aircraft data
-  void update(const char* flight, int altitude, int speed);
+  void update(const char* flight, int altitude, int speed, const char* aircraftType = nullptr);
 
   /// Clear accumulated acceleration (call before force calculation)
   void clearAcceleration();
@@ -178,11 +178,14 @@ private:
   Label flightLabel;
   Label altitudeLabel;
   Label speedLabel;
+  Label typeLabel;
   Label debugLabel;
 
   float labelLevel;
 
   bool& metric;
+  
+  bool hasAircraftType;
 
   float x;
   float y;

@@ -211,7 +211,7 @@ if [[ -f "${MAPDATA_DIR}/ne_10m_land.shp" ]]; then
     CONVERTER_ARGS="${CONVERTER_ARGS} --landfile ${MAPDATA_DIR}/ne_10m_land.shp"
 fi
 # Always include airports.csv file
-CONVERTER_ARGS="${CONVERTER_ARGS} --airports-csv ${MAPDATA_DIR}/airports.csv"
+CONVERTER_ARGS="${CONVERTER_ARGS} --icao-airportnames ${MAPDATA_DIR}/airports.csv"
 
 if [[ -f "${MAPDATA_DIR}/ne_10m_admin_1_states_provinces.shp" ]]; then
     CONVERTER_ARGS="${CONVERTER_ARGS} --mapfile ${MAPDATA_DIR}/ne_10m_admin_1_states_provinces.shp"

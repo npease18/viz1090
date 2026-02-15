@@ -63,6 +63,7 @@ set(CORE_SOURCES
   src/core/Aircraft.cpp
   src/core/AircraftList.cpp
   src/core/Battery.cpp
+  src/core/RegistrationLookup.cpp
 )
 
 set(DECODER_SOURCES
@@ -199,17 +200,20 @@ if(BUILD_TESTS)
     tests/test_modes_decoder.cpp
     tests/test_cpr_decoder.cpp
     tests/test_mode_ac_decoder.cpp
+    tests/test_registration_lookup.cpp
   )
 
   # Test executable
   add_executable(viz1090_tests
     ${TEST_SOURCES}
     ${DECODER_SOURCES}
+    ${CORE_SOURCES}
     src/app/Config.cpp
   )
 
   target_include_directories(viz1090_tests PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}
+    ${CMAKE_CURRENT_SOURCE_DIR}/src
     ${CMAKE_CURRENT_SOURCE_DIR}/include
   )
 

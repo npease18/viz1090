@@ -31,6 +31,7 @@
 #include <algorithm>
 #include <cmath>
 #include <cstdio>
+#include <cstring>
 
 #include "SDL2/SDL2_gfxPrimitives.h"
 
@@ -70,21 +71,26 @@ AircraftLabel::getFullRect(int labelLevelVal) {
 
   SDL_Rect currentRect;
 
+  // Always include flight label
   if (labelLevelVal < 2) {
-    currentRect = speedLabel.getRect();
-
+    currentRect = flightLabel.getRect();
     rect.w = std::max(rect.w, currentRect.w);
     rect.h += currentRect.h;
+
+    // Include type label if available
+    if (hasAircraftType) {
+      currentRect = typeLabel.getRect();
+      rect.w = std::max(rect.w, currentRect.w);
+      rect.h += currentRect.h;
+    }
   }
 
   if (labelLevelVal < 1) {
     currentRect = altitudeLabel.getRect();
-
     rect.w = std::max(rect.w, currentRect.w);
     rect.h += currentRect.h;
 
     currentRect = speedLabel.getRect();
-
     rect.w = std::max(rect.w, currentRect.w);
     rect.h += currentRect.h;
   }
@@ -93,7 +99,7 @@ AircraftLabel::getFullRect(int labelLevelVal) {
 }
 
 void
-AircraftLabel::update(const char* flight, int altitude, int speed) {
+AircraftLabel::update(const char* flight, int altitude, int speed, const char* aircraftType) {
   char flightBuf[17] = "";
   std::snprintf(flightBuf, 17, " %s", flight);
 
@@ -120,6 +126,15 @@ AircraftLabel::update(const char* flight, int altitude, int speed) {
   }
 
   speedLabel.setText(speedBuf);
+  
+  // Set aircraft type if provided
+  if (aircraftType && strlen(aircraftType) > 0) {
+    typeLabel.setText(aircraftType);
+    hasAircraftType = true;
+  } else {
+    typeLabel.setText("");  // Clear if no type available
+    hasAircraftType = false;
+  }
 }
 
 void
@@ -582,6 +597,22 @@ AircraftLabel::draw(SDL_Renderer* renderer, bool selected, bool showLabels,
 
     totalWidth = std::max(totalWidth, outRect.w);
     totalHeight += outRect.h;
+
+    // Draw aircraft type under the callsign if available
+    if (hasAircraftType) {
+      SDL_Color typeColor = style.subLabelColor;
+      typeColor.a = static_cast<int>(255.0f * opacity);
+
+      typeLabel.setColor(typeColor);
+      typeLabel.setPosition(ix, iy + totalHeight);
+      if (dimensionsValid) {
+        typeLabel.draw(renderer);
+      }
+      outRect = typeLabel.getRect();
+
+      totalWidth = std::max(totalWidth, outRect.w);
+      totalHeight += outRect.h;
+    }
   }
 
   if (labelLevel < 1 || selected) {
@@ -634,6 +665,7 @@ AircraftLabel::AircraftLabel(uint32_t aircraftAddr, bool& metric, int screenWidt
     : aircraftAddr_(aircraftAddr),
       labelLevel(0),
       metric(metric),
+      hasAircraftType(false),
       x(0),
       y(20.0f),
       w(0),
@@ -656,6 +688,7 @@ AircraftLabel::AircraftLabel(uint32_t aircraftAddr, bool& metric, int screenWidt
   flightLabel.setFont(font);
   altitudeLabel.setFont(font);
   speedLabel.setFont(font);
+  typeLabel.setFont(font);
   debugLabel.setFont(font);
 
   lastLevelChange = now();

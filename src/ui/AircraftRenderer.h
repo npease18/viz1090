@@ -37,6 +37,7 @@
 #include <vector>
 
 #include "core/AircraftList.h"
+#include "core/RegistrationLookup.h"
 #include "ui/AircraftLabel.h"
 #include "ui/AircraftViewState.h"
 #include "ui/LabelConfig.h"
@@ -134,6 +135,11 @@ public:
   ui::LabelConfig& labelConfig() { return labelConfig_; }
   const ui::LabelConfig& labelConfig() const { return labelConfig_; }
 
+  /// Initialize aircraft registration lookup
+  void initializeRegistrationLookup(const std::string& registrationDataPath) {
+    registrationLookup_.initialize(registrationDataPath);
+  }
+
   /// Toggle debug label overlay (bound to 'D' key)
   void toggleDebugLabels() { debugLabels_ = !debugLabels_; }
 
@@ -221,6 +227,9 @@ private:
   // Spatial grid for efficient label neighbor queries
   mutable ui::LabelSpatialGrid labelSpatialGrid_;
   mutable std::vector<const ui::LabelNeighbor*> nearbyNeighborsTemp_;
+  
+  // Aircraft registration lookup
+  viz1090::core::RegistrationLookup registrationLookup_;
 };
 
 }  // namespace viz1090

@@ -33,6 +33,7 @@
 
 #include "SDL2/SDL2_gfxPrimitives.h"
 #include "core/Aircraft.h"
+#include "core/RegistrationLookup.h"
 #include "ui/AircraftLabel.h"
 #include "ui/Label.h"
 #include "ui/MapView.h"
@@ -712,8 +713,19 @@ void AircraftRenderer::drawPlaneText(const RenderContext& ctx, Aircraft* p,
                                      Aircraft* selectedAircraft) {
   auto& viewState = getOrCreateViewState(ctx, p);
 
+  // Lookup aircraft type if available
+  std::string aircraftType = registrationLookup_.lookupAircraftType(p->addr);
+  const char* typeStr = aircraftType.empty() ? nullptr : aircraftType.c_str();
+  
+  // Debug output for first few lookups
+  static int debugCount = 0;
+  if (debugCount < 5) {
+    std::fprintf(stderr, "Debug: Aircraft %06X -> type '%s'\n", p->addr, typeStr ? typeStr : "NONE");
+    debugCount++;
+  }
+
   // Update label text
-  viewState.label->update(p->flight, p->altitude, p->speed);
+  viewState.label->update(p->flight, p->altitude, p->speed, typeStr);
 
   // Draw label
   viewState.label->draw(ctx.renderer, (p == selectedAircraft), labelConfig_.showLabels,

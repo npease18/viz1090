@@ -89,3 +89,5 @@ coverage/
 gmon.out
 *.prof
 icao_airportnames
+
+registration_data

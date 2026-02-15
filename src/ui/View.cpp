@@ -405,6 +405,10 @@ View::View(AppData* appData)
   // Set metric preference on components
   aircraftRenderer.setMetric(&metric);
 
+  // Initialize registration lookup
+  aircraftRenderer.initializeRegistrationLookup("registration_data");
+  std::fprintf(stderr, "Debug: Initialized registration lookup with registration_data directory\n");
+
   // Set up UI callbacks
   uiOverlay.setFrameAllCallback([this]() { frameAllAircraft(); });
   uiOverlay.setThemeSupport(
